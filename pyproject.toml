@@ -1,0 +1,31 @@
+[project]
+name = "agent-defense"
+version = "0.2.0"
+description = "A Jev-powered security guard for AI agents: blocks dangerous tool calls, strips prompt injection, and scans skills. Works with Claude Code, Codex, Copilot CLI, Gemini CLI, Cursor, and OpenCode."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["typesafe-sdk>=0.6.0"]
+keywords = ["ai-agents", "prompt-injection", "llm-security", "claude-code", "guardrails", "jev", "typesafe"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Security",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+# `pip install` puts an `agentdefense` command on your PATH.
+[project.scripts]
+agentdefense = "agent_defense.__main__:cli"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["agent_defense"]
+
+[tool.setuptools.package-data]
+agent_defense = ["plugins/*.js"]
