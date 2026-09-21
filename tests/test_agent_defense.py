@@ -533,3 +533,25 @@ def test_redirect_targets_outside_project_are_found(cmd, outside, project):
 
 def test_writes_outside_project_ask_even_when_requested():
     assert decide_action(answers(requested=0.95), 0, False, writes_outside=["~/.zshrc"])[0] == Decision.ASK
+
+
+# ── rigidity: an explicit request must not be overruled on hosts without prompts ─────
+
+
+def test_explicit_permanent_delete_is_user_confirmed():
+    from agent_defense.action_gate import user_clearly_confirmed
+
+    explicit = answers(deletes=0.98, requested=0.99, reversible=0.4, scope=1)
+    assert decide_action(explicit, 0, False)[0] == Decision.ASK  # still "are you sure?" where a prompt exists
+    assert user_clearly_confirmed(explicit, tainted=False)
+    assert not user_clearly_confirmed(explicit, tainted=True)  # never after an injection
+    assert not user_clearly_confirmed(answers(deletes=0.98, requested=0.65), tainted=False)  # vague request
+    assert not user_clearly_confirmed(answers(requested=0.99, manip=0.9), tainted=False)
+
+
+@pytest.mark.parametrize("mode,confirmed,expected", [("smart", True, "ask"), ("smart", False, "deny"), ("deny", True, "deny"), ("warn", False, "ask")])
+def test_ask_fallback_modes(mode, confirmed, expected, monkeypatch):
+    from agent_defense.hosts import ask_fallback
+
+    monkeypatch.setenv("AGENT_DEFENSE_ASK_FALLBACK", mode)
+    assert ask_fallback("x", confirmed)[0] == expected

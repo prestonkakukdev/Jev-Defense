@@ -49,11 +49,11 @@ Then register it with your agent (each command is idempotent, keeps your other h
 | OpenCode | `agentdefense install opencode` | deny · **approval prompt**¹ | warn + strip |
 | Cursor | `agentdefense install cursor` | deny · **approval prompt** (shell, MCP) | warn |
 | Copilot CLI | `agentdefense install copilot` | deny · **approval prompt** | warn |
-| Codex | `agentdefense install codex` | deny · refuse² | warn |
-| Gemini CLI | `agentdefense install gemini` | deny · refuse² | warn |
+| Codex | `agentdefense install codex` | deny · smart fallback² | warn |
+| Gemini CLI | `agentdefense install gemini` | deny · smart fallback² | warn |
 
-¹ Set `"permission": {"bash": "ask", "edit": "ask"}` in `opencode.json`; AgentDefense then auto-approves safe calls and prompts only for risky ones.
-² These hosts can't show approval prompts, so "ask a human" becomes a refusal with the reason attached. `AGENT_DEFENSE_ASK_FALLBACK=warn` lets it through with a warning instead.
+¹ Set `"permission": {"bash": "ask", "edit": "ask"}` in `opencode.json`; AgentDefense then auto-approves safe calls and prompts only for risky ones. Without that, it uses the smart fallback².
+² For hosts that can't show an approval prompt: if you **clearly asked for that exact action** ("delete the src folder"), your request counts as the confirmation and it runs. If AgentDefense isn't sure you asked ("clean up", "yes do it"), or the session read hostile content, it refuses and says why. `AGENT_DEFENSE_ASK_FALLBACK=deny` always refuses; `=warn` always runs.
 
 Remove it again with `agentdefense uninstall <agent>`.
 
@@ -119,7 +119,7 @@ Other languages can use the JSON interface: `echo '{"user_request":"…","comman
 | `TYPESAFE_DEFAULT_MODEL` | `jev-latest` | Pin a version (e.g. `jev-1.13.0`) once you've tuned thresholds |
 | `AGENT_DEFENSE_TIMEOUT` | `20` | Seconds per decision, retries included. Stays under the ~30 s hook limit so failing closed really happens |
 | `AGENT_DEFENSE_FAIL_OPEN` | unset | `1` = allow when Jev is unreachable. **Default is fail closed** (a human decides) |
-| `AGENT_DEFENSE_ASK_FALLBACK` | `deny` | For hosts without approval prompts: `warn` lets ASK verdicts through |
+| `AGENT_DEFENSE_ASK_FALLBACK` | `smart` | Hosts without approval prompts: `smart` runs what you clearly asked for, `deny` always refuses, `warn` always runs |
 | `AGENT_DEFENSE_SKIP_TOOLS` / `_SKIP_SCAN` | (none) | Comma-separated tool names to exclude |
 
 Thresholds and questions are in [`rulebook.py`](agent_defense/rulebook.py). Rerun `agentdefense eval` after changing them.

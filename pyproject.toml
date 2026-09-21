@@ -1,6 +1,6 @@
 [project]
 name = "agent-defense"
-version = "0.2.0"
+version = "0.2.1"
 description = "A Jev-powered security guard for AI agents: blocks dangerous tool calls, strips prompt injection, and scans skills. Works with Claude Code, Codex, Copilot CLI, Gemini CLI, Cursor, and OpenCode."
 readme = "README.md"
 license = { text = "MIT" }

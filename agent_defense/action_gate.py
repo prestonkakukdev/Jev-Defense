@@ -63,6 +63,24 @@ class Verdict:
     backend: str = ""
     model: str | None = None
     latency_ms: float = 0.0
+    # True when an ASK exists only because the action is consequential, and the user's own
+    # recent words clearly asked for it. Hosts that CAN'T show an approval prompt use this: the
+    # user's explicit request is already the human confirmation an ASK is looking for.
+    user_confirmed: bool = False
+
+
+def user_clearly_confirmed(a: dict[str, Answer], tainted: bool) -> bool:
+    """Explicit request, reason fits (or absent), no manipulation, no injected-instruction match, clean session."""
+    if tainted or "user_requested" not in a:
+        return False
+    need = ACTION.clearly_requested
+    reason = a.get("reason_matches_request")
+    return (
+        a["user_requested"].value >= need
+        and (reason is None or reason.value >= ACTION.reason_matches)
+        and max(a["reason_has_manipulation"].value, a["command_has_reviewer_text"].value) < ACTION.manipulation_block
+        and ("follows_untrusted_instruction" not in a or a["follows_untrusted_instruction"].value < ACTION.follows_untrusted_block)
+    )
 
 
 class ActionGate:
@@ -143,7 +161,8 @@ class ActionGate:
         )
         decision, reasons, scope = decide_action(answers, facts.scope_floor, self.session.tainted, code_destructive=facts.destroys_whole_table, writes_outside=writes_outside)
         signals = {qid: round(a.value, 3) for qid, a in answers.items()}
-        return Verdict(decision, reasons, "jev", signals=signals, scope_level=scope, facts=facts.for_jev())
+        confirmed = decision == Decision.ASK and user_clearly_confirmed(answers, self.session.tainted) and not writes_outside and not facts.destroys_whole_table
+        return Verdict(decision, reasons, "jev", signals=signals, scope_level=scope, facts=facts.for_jev(), user_confirmed=confirmed)
 
 
 async def ask_groups(jev: JevBackend, groups: list[QuestionGroup], evidence: dict) -> dict[str, Answer]:

@@ -268,7 +268,7 @@ class Hook:
         level = {Decision.ALLOW: "allow", Decision.ASK: "ask", Decision.BLOCK: "deny"}[verdict.decision]
         signals = ", ".join(f"{k}={v:.2f}" for k, v in list(verdict.signals.items())[:6])
         message = f"AgentDefense {verdict.decision.value}: {' '.join(verdict.reasons)}" + (f" [{signals}]" if signals else "")
-        return self._pre(level, message)
+        return self._pre(level, message, confirmed=verdict.user_confirmed)
 
     async def on_post_tool(self) -> dict | None:
         tool, tool_input, _ = self._tool_call()
@@ -313,13 +313,12 @@ class Hook:
             return f"mcp__{e.get('mcp_server_name', 'mcp')}__{e.get('tool_name', '')}", _parse_maybe(e.get("tool_input")), e.get("agent_message", "")
         return str(e.get("tool_name", "")), _parse_maybe(e.get("tool_input", {})), e.get("agent_message", "")
 
-    def _pre(self, level: str, message: str) -> dict | None:
+    def _pre(self, level: str, message: str, confirmed: bool = False) -> dict | None:
         """Answer a before-tool event. ALLOW is silence wherever the host allows it, so the
         host's own permission rules still apply: a guard should only ever tighten."""
         agent, event = self.agent, self.event
-        if level == "ask" and agent in {"codex", "gemini"} and os.environ.get("AGENT_DEFENSE_ASK_FALLBACK", "deny") == "deny":
-            level = "deny"  # these hosts can't prompt; by default a human-check becomes a refusal
-            message += " (This agent can't show an approval prompt, so AgentDefense refused. Set AGENT_DEFENSE_ASK_FALLBACK=warn to let it through with a warning.)"
+        if level == "ask" and agent in {"codex", "gemini"}:
+            level, message = ask_fallback(message, confirmed)
 
         if agent == "cursor":
             if level == "allow" or (level == "ask" and event == "preToolUse"):
@@ -355,6 +354,24 @@ class Hook:
         if replacement:
             out["hookSpecificOutput"]["updatedMCPToolOutput"] = replacement
         return out
+
+
+def ask_fallback(message: str, confirmed: bool) -> tuple[str, str]:
+    """
+    What an ASK becomes on a host that can't show an approval prompt.
+
+      smart (default): the user clearly asked for this exact action → let it run (their request
+                       IS the confirmation); otherwise → refuse. Without this, "delete the src
+                       folder" was refused outright, overruling the person who asked.
+      deny:            always refuse.       warn: always let it run.
+    """
+    mode = os.environ.get("AGENT_DEFENSE_ASK_FALLBACK", "smart")
+    if mode == "warn" or (mode == "smart" and confirmed):
+        return "ask", message  # the caller turns this into a warning (codex) or a system message (gemini)
+    return "deny", message + (
+        " (This agent can't show an approval prompt, so AgentDefense refused. If you meant it, ask for the exact action"
+        " explicitly, e.g. 'delete src/', or set AGENT_DEFENSE_ASK_FALLBACK=warn.)"
+    )
 
 
 def _env_set(name: str) -> set[str]:

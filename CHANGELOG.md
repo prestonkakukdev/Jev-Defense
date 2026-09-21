@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+- **Less rigid on hosts without approval prompts** (OpenCode without prompt config, Codex, Gemini CLI). An ASK used to become a refusal even when you had explicitly asked, e.g. "delete the src folder". Now a clear, explicit request counts as the confirmation (`smart` fallback). Vague requests, tainted sessions, whole-table SQL, and writes outside the project are still refused.
+- Verified end to end on live Jev: explicitly requested deletes and every requested file edit or write run; unrequested destructive edits, exfiltration, and "yes do it" without a named target are still stopped.
+
 ## 0.2.0
 - **Every major agent**: one universal hook speaks Claude Code, Codex, Copilot CLI, Gemini CLI, and Cursor; OpenCode plugin with real approval prompts via `permission.ask`. `agentdefense install|uninstall <agent>`.
 - **Prompt capture at submit time** (`UserPromptSubmit` and equivalents) instead of reading lagging transcripts.

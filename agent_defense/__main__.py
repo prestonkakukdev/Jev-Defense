@@ -132,7 +132,7 @@ async def _run(args, jev) -> int:
             v = await ActionGate(jev, session).check(req)
         finally:
             session.save()
-        print(json.dumps({"decision": v.decision.value, "reasons": v.reasons, "signals": v.signals, "stage": v.stage, "scope_level": v.scope_level, "latency_ms": round(v.latency_ms)}))
+        print(json.dumps({"decision": v.decision.value, "reasons": v.reasons, "signals": v.signals, "stage": v.stage, "scope_level": v.scope_level, "latency_ms": round(v.latency_ms), "user_confirmed": v.user_confirmed}))
         return 0
 
     if args.cmd == "scan":

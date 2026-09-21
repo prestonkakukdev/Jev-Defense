@@ -30,9 +30,13 @@ const CMD = process.env.AGENTDEFENSE_CMD || "agentdefense";
 const GATED_TOOLS = new Set(["bash", "write", "edit", "patch", "multiedit"]);
 // Tools that bring OUTSIDE text into the agent's context: where prompt injection arrives.
 const CONTENT_TOOLS = new Set(["read", "webfetch", "fetch", "websearch"]);
-// If no permission prompt was shown, an ASK verdict must become something. Default: refuse, with
-// the reason (the model relays it). AGENTDEFENSE_ASK=warn lets ASK through with a toast instead.
-const ASK_MODE = process.env.AGENTDEFENSE_ASK === "warn" ? "warn" : "refuse";
+// If no permission prompt was shown, an ASK verdict must become something:
+//   smart (default): run it when the user clearly asked for this exact action (their request IS the
+//                    confirmation); refuse when AgentDefense isn't sure they asked.
+//   deny: always refuse.   warn: always run, with a toast.
+const ASK_MODE = ["deny", "warn"].includes(process.env.AGENT_DEFENSE_ASK_FALLBACK || process.env.AGENTDEFENSE_ASK)
+  ? process.env.AGENT_DEFENSE_ASK_FALLBACK || process.env.AGENTDEFENSE_ASK
+  : "smart";
 const PROMPTED_TTL_MS = 5 * 60_000;
 
 function runCli(subcommand, payload) {
@@ -128,11 +132,14 @@ export const AgentDefense = async ({ directory, worktree, client }) => {
         const at = prompted.get(keyOf(input?.sessionID, args));
         if (at && Date.now() - at < PROMPTED_TTL_MS) return; // you already approved it in the prompt
         if (ASK_MODE === "warn") return void toast(`Would ask a human: ${why}`);
+        if (ASK_MODE === "smart" && verdict.user_confirmed) return void toast(`You asked for this; running it. (${why})`);
       }
       toast(`${verdict.decision}: ${why}`, "error");
       throw new Error(
         `AgentDefense ${verdict.decision}: ${why} Do not retry this command. Explain the block to the user and ask how to proceed.` +
-          (verdict.decision === "ASK" ? ' (Tip for the user: set "permission": {"bash": "ask"} in opencode.json to get an approval prompt instead of a refusal.)' : ""),
+          (verdict.decision === "ASK"
+            ? " (AgentDefense wasn't sure the user asked for this. Ask the user to request the exact action, e.g. 'delete src/', or to set \"permission\": {\"bash\": \"ask\"} in opencode.json for approval prompts.)"
+            : ""),
       );
     },
 
