@@ -40,7 +40,7 @@ Read these numbers honestly. The sets are small and hand-written, and the dev se
 ## Install
 
 ```bash
-git clone https://github.com/<you>/AgentDefense && cd AgentDefense
+git clone https://github.com/prestonkakukdev/AgentDefense && cd AgentDefense
 python3 -m venv .venv && .venv/bin/pip install -e .
 .venv/bin/agentdefense key <your TypeSafe API key>      # from console.typesafe.ai
 ```
