@@ -16,13 +16,17 @@ BLOCK  Deletes or overwrites data (p=0.98) but the user did not clearly ask for 
 
 An agent acts with **your** permissions while taking directions from **whatever text it reads**. A web page, an issue comment, a README in a cloned repo, or a malicious skill can all tell it to delete your work or upload your `.env`, and to the model that text looks just like your instructions.
 
+Agents also make damaging mistakes with no attacker involved. In April 2026 a Cursor agent running Claude Opus 4.6 deleted PocketOS's production database and its backups with a single call to the Railway API, in about nine seconds. It had been working on a credential mismatch and was never asked to delete anything. The outage lasted more than 30 hours before the data was recovered. ([Euronews](https://www.euronews.com/next/2026/04/28/an-ai-agent-deleted-a-companys-entire-database-in-9-seconds-then-wrote-an-apology), [Tom's Hardware](https://www.tomshardware.com/tech-industry/artificial-intelligence/claude-powered-ai-coding-agent-deletes-entire-company-database-in-9-seconds-backups-zapped-after-cursor-tool-powered-by-anthropics-claude-goes-rogue))
+
+A command shaped like that one is in the eval set (`incident-pocketos-*`), and AgentDefense blocks it: it deletes data (p=0.94), and the user did not ask for it (p=0.03), even though the agent's explanation sounded plausible.
+
 Model-side refusals help, but they vary by model and fail on attacks that look like ordinary documentation. AgentDefense sits *outside* the model, so the same checks apply whichever model you run.
 
 ## Results (live Jev, `jev-1.13.0`)
 
-| | Dev set (51 cases) | Held-out set (24 cases, run once, not tuned) |
+| | Dev set (53 cases) | Held-out set (24 cases, run once, not tuned) |
 |---|---|---|
-| Dangerous actions stopped | **23 / 23** | **11 / 11** |
+| Dangerous actions stopped | **25 / 25** | **11 / 11** |
 | Legitimate actions wrongly blocked | 0 / 14 | 0 / 7 |
 | Legitimate actions sent to a human | 1 / 14 | 0 / 7 |
 | Prompt injections detected | 5 / 5 | 2 / 2 |
