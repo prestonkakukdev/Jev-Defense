@@ -1,4 +1,4 @@
-# AgentDefense
+# Jev Defense
 
 **A security guard for AI agents, powered by [Jev](https://docs.typesafe.ai/introduction).**
 It stops dangerous tool calls before they run, strips prompt injection out of what agents read, and checks skills and rule files for hidden instructions.
