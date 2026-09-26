@@ -1,12 +1,12 @@
 """
-`agentdefense install <agent>`: register the hook in an agent's own config file.
+`jevdefense install <agent>`: register the hook in an agent's own config file.
 
 Rules every installer follows:
-  * IDEMPOTENT: running it twice gives the same file. Old AgentDefense entries are removed before
+  * IDEMPOTENT: running it twice gives the same file. Old JevDefense entries are removed before
     new ones are added, and nobody else's hooks are touched.
   * ABSOLUTE PATHS: the hook command uses this exact Python interpreter. Editors launched from the
-    Dock don't load your shell's PATH, so a bare `agentdefense` might not be found there.
-  * BACKUP: the previous file is kept next to it as `<name>.agentdefense.bak`.
+    Dock don't load your shell's PATH, so a bare `jevdefense` might not be found there.
+  * BACKUP: the previous file is kept next to it as `<name>.jevdefense.bak`.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from pathlib import Path
 
 # Every command we write contains one of these, which is how we recognise (and replace) our own
 # entries, including ones from the older hooks/claude_code_guard.py setup.
-MARKS = ("agent_defense", "claude_code_guard")
+MARKS = ("jev_defense", "claude_code_guard")
 AGENTS = ("claude", "codex", "copilot", "gemini", "cursor", "opencode")
 
 # Tool matchers for Claude-shaped hosts. PreToolUse covers everything that changes the world;
@@ -28,7 +28,7 @@ POST_MATCHER = "WebFetch|WebSearch|Read|Bash|Skill|mcp__.*"
 
 
 def hook_command(agent: str | None = None) -> str:
-    cmd = f'"{sys.executable}" -m agent_defense hook'
+    cmd = f'"{sys.executable}" -m jev_defense hook'
     return f"{cmd} --agent {agent}" if agent else cmd
 
 
@@ -42,7 +42,7 @@ def _read(path: Path) -> dict:
 def _write(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.is_file():
-        shutil.copy2(path, path.with_name(path.name + ".agentdefense.bak"))
+        shutil.copy2(path, path.with_name(path.name + ".jevdefense.bak"))
     path.write_text(json.dumps(data, indent=2) + "\n")
 
 
@@ -70,10 +70,10 @@ def install(agent: str, home: Path | None = None, project: Path | None = None) -
         for event, e in plan.items():
             hooks[event] = _not_ours(hooks.get(event)) + [e]
         if agent == "codex":
-            note = "Run /hooks inside Codex to trust the new hooks. Codex can't show approval prompts, so ASK verdicts are refused (AGENT_DEFENSE_ASK_FALLBACK=warn to change)."
+            note = "Run /hooks inside Codex to trust the new hooks. Codex can't show approval prompts, so ASK verdicts are refused (JEV_DEFENSE_ASK_FALLBACK=warn to change)."
 
     elif agent == "copilot":
-        path = home / ".copilot" / "hooks" / "agentdefense.json"
+        path = home / ".copilot" / "hooks" / "jevdefense.json"
         cmd = hook_command("copilot")
         cfg = {"version": 1, "hooks": {ev: [{"type": "command", "bash": cmd, "timeoutSec": 30}] for ev in ("PreToolUse", "PostToolUse", "UserPromptSubmit", "SessionStart")}}
 
@@ -81,10 +81,10 @@ def install(agent: str, home: Path | None = None, project: Path | None = None) -
         path = home / ".gemini" / "settings.json"
         cfg = _read(path)
         hooks = cfg.setdefault("hooks", {})
-        e = {"hooks": [{"name": "agentdefense", "type": "command", "command": hook_command(), "timeout": 30_000}]}
+        e = {"hooks": [{"name": "jevdefense", "type": "command", "command": hook_command(), "timeout": 30_000}]}
         for event in ("BeforeTool", "AfterTool", "BeforeAgent", "SessionStart"):
             hooks[event] = _not_ours(hooks.get(event)) + [e]
-        note = "Gemini CLI can't show approval prompts, so ASK verdicts are refused (AGENT_DEFENSE_ASK_FALLBACK=warn to change)."
+        note = "Gemini CLI can't show approval prompts, so ASK verdicts are refused (JEV_DEFENSE_ASK_FALLBACK=warn to change)."
 
     elif agent == "cursor":
         path = home / ".cursor" / "hooks.json"
@@ -103,15 +103,15 @@ def install(agent: str, home: Path | None = None, project: Path | None = None) -
         add("sessionStart")
 
     elif agent == "opencode":
-        path = home / ".config" / "opencode" / "plugins" / "agentdefense.js"
+        path = home / ".config" / "opencode" / "plugins" / "jevdefense.js"
         path.parent.mkdir(parents=True, exist_ok=True)
         plugin = Path(__file__).resolve().parent / "plugins" / "opencode.js"
         # Copy (not symlink) so a moved checkout can't silently break the guard; rerun install after upgrading.
-        text = plugin.read_text().replace('process.env.AGENTDEFENSE_CMD || "agentdefense"', f"process.env.AGENTDEFENSE_CMD || {json.dumps(sys.executable + ' -m agent_defense')}")
+        text = plugin.read_text().replace('process.env.JEV_DEFENSE_CMD || "jevdefense"', f"process.env.JEV_DEFENSE_CMD || {json.dumps(sys.executable + ' -m jev_defense')}")
         path.write_text(text)
         note = (
             'For real approval prompts, set "permission": {"bash": "ask", "edit": "ask"} in opencode.json. '
-            "AgentDefense then auto-approves safe calls and only prompts you for risky ones."
+            "JevDefense then auto-approves safe calls and only prompts you for risky ones."
         )
         return path, note
 
@@ -125,11 +125,11 @@ def install(agent: str, home: Path | None = None, project: Path | None = None) -
 def uninstall(agent: str, home: Path | None = None, project: Path | None = None) -> Path | None:
     home = home or Path.home()
     if agent == "opencode":
-        path = home / ".config" / "opencode" / "plugins" / "agentdefense.js"
+        path = home / ".config" / "opencode" / "plugins" / "jevdefense.js"
         path.unlink(missing_ok=True)
         return path
     if agent == "copilot":
-        path = home / ".copilot" / "hooks" / "agentdefense.json"
+        path = home / ".copilot" / "hooks" / "jevdefense.json"
         path.unlink(missing_ok=True)
         return path
     path = {

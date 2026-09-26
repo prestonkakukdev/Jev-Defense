@@ -6,7 +6,7 @@ It stops dangerous tool calls before they run, strips prompt injection out of wh
 Works with **Claude Code · Codex · GitHub Copilot CLI · Gemini CLI · Cursor · OpenCode**, plus a Python library and a JSON interface for your own agents.
 
 ```text
-$ agentdefense action --user "fix the typo in the README" --command "git reset --hard HEAD~5"
+$ jevdefense action --user "fix the typo in the README" --command "git reset --hard HEAD~5"
 BLOCK  Deletes or overwrites data (p=0.98) but the user did not clearly ask for it (requested p=0.02)
 ```
 
@@ -18,9 +18,9 @@ An agent acts with **your** permissions while taking directions from **whatever 
 
 Agents also make damaging mistakes with no attacker involved. In April 2026 a Cursor agent running Claude Opus 4.6 deleted PocketOS's production database and its backups with a single call to the Railway API, in about nine seconds. It had been working on a credential mismatch and was never asked to delete anything. The outage lasted more than 30 hours before the data was recovered. ([Euronews](https://www.euronews.com/next/2026/04/28/an-ai-agent-deleted-a-companys-entire-database-in-9-seconds-then-wrote-an-apology), [Tom's Hardware](https://www.tomshardware.com/tech-industry/artificial-intelligence/claude-powered-ai-coding-agent-deletes-entire-company-database-in-9-seconds-backups-zapped-after-cursor-tool-powered-by-anthropics-claude-goes-rogue))
 
-A command shaped like that one is in the eval set (`incident-pocketos-*`), and AgentDefense blocks it: it deletes data (p=0.94), and the user did not ask for it (p=0.03), even though the agent's explanation sounded plausible.
+A command shaped like that one is in the eval set (`incident-pocketos-*`), and Jev Defense blocks it: it deletes data (p=0.94), and the user did not ask for it (p=0.03), even though the agent's explanation sounded plausible.
 
-Model-side refusals help, but they vary by model and fail on attacks that look like ordinary documentation. AgentDefense sits *outside* the model, so the same checks apply whichever model you run.
+Model-side refusals help, but they vary by model and fail on attacks that look like ordinary documentation. Jev Defense sits *outside* the model, so the same checks apply whichever model you run.
 
 ## Results (live Jev, `jev-1.13.0`)
 
@@ -33,33 +33,33 @@ Model-side refusals help, but they vary by model and fail on attacks that look l
 | False alarms on normal pages (incl. security articles) | 0 / 4 | 0 / 2 |
 | Malicious skills detected / false alarms | 3 / 3 · 0 / 2 | 1 / 1 · 0 / 1 |
 
-Median decision time is about 270 ms (p95 about 770 ms). Full per-case tables: [`evals/RESULTS.md`](evals/RESULTS.md) and [`evals/HOLDOUT_RESULTS.md`](evals/HOLDOUT_RESULTS.md). Run them yourself with `agentdefense eval`.
+Median decision time is about 270 ms (p95 about 770 ms). Full per-case tables: [`evals/RESULTS.md`](evals/RESULTS.md) and [`evals/HOLDOUT_RESULTS.md`](evals/HOLDOUT_RESULTS.md). Run them yourself with `jevdefense eval`.
 
 Read these numbers honestly. The sets are small and hand-written, and the dev set was used to tune the policy. The held-out set is the fairer signal. In it, two attacks were stopped with ASK rather than BLOCK (`chmod -R 777 ~`, `truncate` on a lockfile); both are listed as known gaps.
 
 ## Install
 
 ```bash
-git clone https://github.com/prestonkakukdev/AgentDefense && cd AgentDefense
+git clone https://github.com/prestonkakukdev/Jev-Defense && cd Jev Defense
 python3 -m venv .venv && .venv/bin/pip install -e .
-.venv/bin/agentdefense key <your TypeSafe API key>      # from console.typesafe.ai
+.venv/bin/jevdefense key <your TypeSafe API key>      # from console.typesafe.ai
 ```
 
 Then register it with your agent (each command is idempotent, keeps your other hooks, and backs up the file):
 
 | Agent | Command | Risky call | After a tool reads something |
 |---|---|---|---|
-| Claude Code | `agentdefense install claude` (or `--project <dir>`) | deny · **approval prompt** | warn + strip (MCP) |
-| OpenCode | `agentdefense install opencode` | deny · **approval prompt**¹ | warn + strip |
-| Cursor | `agentdefense install cursor` | deny · **approval prompt** (shell, MCP) | warn |
-| Copilot CLI | `agentdefense install copilot` | deny · **approval prompt** | warn |
-| Codex | `agentdefense install codex` | deny · smart fallback² | warn |
-| Gemini CLI | `agentdefense install gemini` | deny · smart fallback² | warn |
+| Claude Code | `jevdefense install claude` (or `--project <dir>`) | deny · **approval prompt** | warn + strip (MCP) |
+| OpenCode | `jevdefense install opencode` | deny · **approval prompt**¹ | warn + strip |
+| Cursor | `jevdefense install cursor` | deny · **approval prompt** (shell, MCP) | warn |
+| Copilot CLI | `jevdefense install copilot` | deny · **approval prompt** | warn |
+| Codex | `jevdefense install codex` | deny · smart fallback² | warn |
+| Gemini CLI | `jevdefense install gemini` | deny · smart fallback² | warn |
 
-¹ Set `"permission": {"bash": "ask", "edit": "ask"}` in `opencode.json`; AgentDefense then auto-approves safe calls and prompts only for risky ones. Without that, it uses the smart fallback².
-² For hosts that can't show an approval prompt: if you **clearly asked for that exact action** ("delete the src folder"), your request counts as the confirmation and it runs. If AgentDefense isn't sure you asked ("clean up", "yes do it"), or the session read hostile content, it refuses and says why. `AGENT_DEFENSE_ASK_FALLBACK=deny` always refuses; `=warn` always runs.
+¹ Set `"permission": {"bash": "ask", "edit": "ask"}` in `opencode.json`; Jev Defense then auto-approves safe calls and prompts only for risky ones. Without that, it uses the smart fallback².
+² For hosts that can't show an approval prompt: if you **clearly asked for that exact action** ("delete the src folder"), your request counts as the confirmation and it runs. If Jev Defense isn't sure you asked ("clean up", "yes do it"), or the session read hostile content, it refuses and says why. `JEV_DEFENSE_ASK_FALLBACK=deny` always refuses; `=warn` always runs.
 
-Remove it again with `agentdefense uninstall <agent>`.
+Remove it again with `jevdefense uninstall <agent>`.
 
 ## How it works
 
@@ -73,7 +73,7 @@ Remove it again with `agentdefense uninstall <agent>`.
           skills, rules, CLAUDE.md ──► INSTRUCTION SCAN (at session start and on load)
 ```
 
-**Jev never makes the final decision.** It answers narrow, typed yes/no questions with calibrated probabilities. A readable table of `if` statements turns those numbers into a verdict. All questions and thresholds live in one file, [`agent_defense/rulebook.py`](agent_defense/rulebook.py).
+**Jev never makes the final decision.** It answers narrow, typed yes/no questions with calibrated probabilities. A readable table of `if` statements turns those numbers into a verdict. All questions and thresholds live in one file, [`jev_defense/rulebook.py`](jev_defense/rulebook.py).
 
 ### Action gate: what's checked before a tool runs
 
@@ -100,12 +100,12 @@ Remove it again with `agentdefense uninstall <agent>`.
 
 ### Instruction scan: skills, rules, `CLAUDE.md`, `AGENTS.md`
 
-These files are supposed to instruct the agent, which makes them a supply-chain target. They are asked a different question: does this file also do something its installer wouldn't expect (exfiltration, covert execution, overriding safety checks, canaries, unrelated config edits)? Results are cached by content hash, so repeat sweeps are free. Run `agentdefense scan-skills --user` to audit every agent's skill folders.
+These files are supposed to instruct the agent, which makes them a supply-chain target. They are asked a different question: does this file also do something its installer wouldn't expect (exfiltration, covert execution, overriding safety checks, canaries, unrelated config edits)? Results are cached by content hash, so repeat sweeps are free. Run `jevdefense scan-skills --user` to audit every agent's skill folders.
 
 ## Use it in your own agent
 
 ```python
-from agent_defense import ActionGate, ActionRequest, ContentGate, Session, default_backend, wrap_untrusted
+from jev_defense import ActionGate, ActionRequest, ContentGate, Session, default_backend, wrap_untrusted
 
 jev, session = default_backend(), Session()
 verdict = await ActionGate(jev, session).check(ActionRequest(user_message, command, agent_reason))
@@ -113,20 +113,20 @@ scan = await ContentGate(jev, session).scan(page_html, user_task=user_message, s
 agent_reads = wrap_untrusted(scan.safe_text, url)
 ```
 
-Other languages can use the JSON interface: `echo '{"user_request":"…","command":"…"}' | agentdefense check`.
+Other languages can use the JSON interface: `echo '{"user_request":"…","command":"…"}' | jevdefense check`.
 
 ## Configuration
 
 | Variable | Default | Effect |
 |---|---|---|
-| `TYPESAFE_API_KEY` | (none) | API key. Also read from `.env` or `~/.agent_defense/config.json` (`agentdefense key`) |
+| `TYPESAFE_API_KEY` | (none) | API key. Also read from `.env` or `~/.jev_defense/config.json` (`jevdefense key`) |
 | `TYPESAFE_DEFAULT_MODEL` | `jev-latest` | Pin a version (e.g. `jev-1.13.0`) once you've tuned thresholds |
-| `AGENT_DEFENSE_TIMEOUT` | `20` | Seconds per decision, retries included. Stays under the ~30 s hook limit so failing closed really happens |
-| `AGENT_DEFENSE_FAIL_OPEN` | unset | `1` = allow when Jev is unreachable. **Default is fail closed** (a human decides) |
-| `AGENT_DEFENSE_ASK_FALLBACK` | `smart` | Hosts without approval prompts: `smart` runs what you clearly asked for, `deny` always refuses, `warn` always runs |
-| `AGENT_DEFENSE_SKIP_TOOLS` / `_SKIP_SCAN` | (none) | Comma-separated tool names to exclude |
+| `JEV_DEFENSE_TIMEOUT` | `20` | Seconds per decision, retries included. Stays under the ~30 s hook limit so failing closed really happens |
+| `JEV_DEFENSE_FAIL_OPEN` | unset | `1` = allow when Jev is unreachable. **Default is fail closed** (a human decides) |
+| `JEV_DEFENSE_ASK_FALLBACK` | `smart` | Hosts without approval prompts: `smart` runs what you clearly asked for, `deny` always refuses, `warn` always runs |
+| `JEV_DEFENSE_SKIP_TOOLS` / `_SKIP_SCAN` | (none) | Comma-separated tool names to exclude |
 
-Thresholds and questions are in [`rulebook.py`](agent_defense/rulebook.py). Rerun `agentdefense eval` after changing them.
+Thresholds and questions are in [`rulebook.py`](jev_defense/rulebook.py). Rerun `jevdefense eval` after changing them.
 
 ## Try it without risk
 
@@ -138,7 +138,7 @@ Thresholds and questions are in [`rulebook.py`](agent_defense/rulebook.py). Reru
 
 - **A guardrail, not a sandbox.** A misconfigured hook, a tool path the host doesn't expose to hooks, or a wrong answer from Jev can let something through. Keep your other controls.
 - **It only sees the dimensions it asks about.** A catch-all "would an engineer want to approve this?" question narrows the gap but doesn't close it.
-- **Host gaps.** Claude Code can't rewrite a built-in tool's output after the fact (AgentDefense warns and taints instead). OpenCode reportedly doesn't fire plugin hooks for subagent tool calls ([opencode#5894](https://github.com/anomalyco/opencode/issues/5894)).
+- **Host gaps.** Claude Code can't rewrite a built-in tool's output after the fact (Jev Defense warns and taints instead). OpenCode reportedly doesn't fire plugin hooks for subagent tool calls ([opencode#5894](https://github.com/anomalyco/opencode/issues/5894)).
 - **Privacy.** Tool calls and tool output are sent to TypeSafe's API for scoring. Review their [privacy policy](https://typesafe.ai/privacy) before using it on sensitive repositories.
 - **Cost and latency.** About four Jev calls per checked action (small fractions of a cent) and about a quarter second added. Read-only tools and simple read commands skip Jev entirely.
 
@@ -148,7 +148,7 @@ Thresholds and questions are in [`rulebook.py`](agent_defense/rulebook.py). Reru
 
 ## Credits
 
-The multi-agent reach of v0.2 follows **[jev-guard](https://github.com/leepokai/jev-guard)** (MIT) by leepokai. Its host payload formats, prompt-hook context capture, OpenCode `permission.ask` technique, instruction-file scanning, `discussion`/`canary` categories, and catch-all approval question all informed this version. AgentDefense's own contributions are the isolated-question design, hidden-content extraction, passage removal, taint tracking, SQL and path facts, exfiltration questions, and the eval harness.
+The multi-agent reach of v0.2 follows **[jev-guard](https://github.com/leepokai/jev-guard)** (MIT) by leepokai. Its host payload formats, prompt-hook context capture, OpenCode `permission.ask` technique, instruction-file scanning, `discussion`/`canary` categories, and catch-all approval question all informed this version. Jev Defense's own contributions are the isolated-question design, hidden-content extraction, passage removal, taint tracking, SQL and path facts, exfiltration questions, and the eval harness.
 
 ## License
 

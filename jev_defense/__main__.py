@@ -1,15 +1,15 @@
 """
-agentdefense: a Jev-powered guard for AI agents.
+jevdefense: a Jev-powered guard for AI agents.
 
-  agentdefense install <agent>          claude | codex | copilot | gemini | cursor | opencode
-  agentdefense uninstall <agent>
-  agentdefense key <api-key>            save your TypeSafe key for every host (0600 file)
-  agentdefense action --user "…" --command "…" [--reason "…"]     check one tool call
-  agentdefense content (--file F | --url U | --text T) --task "…"  scan text for prompt injection
-  agentdefense scan-skills [paths…] [--user]                     check skills / CLAUDE.md / rules
-  agentdefense eval [--mock]                                     accuracy on the labeled test set
-  agentdefense hook [--agent X]          (hosts call this: JSON event on stdin, JSON answer on stdout)
-  agentdefense check | scan              (adapters call these: JSON in, JSON out)
+  jevdefense install <agent>          claude | codex | copilot | gemini | cursor | opencode
+  jevdefense uninstall <agent>
+  jevdefense key <api-key>            save your TypeSafe key for every host (0600 file)
+  jevdefense action --user "…" --command "…" [--reason "…"]     check one tool call
+  jevdefense content (--file F | --url U | --text T) --task "…"  scan text for prompt injection
+  jevdefense scan-skills [paths…] [--user]                     check skills / CLAUDE.md / rules
+  jevdefense eval [--mock]                                     accuracy on the labeled test set
+  jevdefense hook [--agent X]          (hosts call this: JSON event on stdin, JSON answer on stdout)
+  jevdefense check | scan              (adapters call these: JSON in, JSON out)
 
 Add --mock to use the offline stand-in, --json for machine-readable output.
 """
@@ -29,7 +29,7 @@ from . import ActionGate, ActionRequest, ContentGate, Session, default_backend, 
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="agentdefense", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(prog="jevdefense", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--mock", action="store_true", help="use the offline keyword stand-in instead of Jev")
     parser.add_argument("--json", action="store_true", help="print the full verdict as JSON")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -82,16 +82,16 @@ async def main(argv: list[str]) -> int:
 
         project = Path(args.project).resolve() if args.project else None
         if args.cmd == "uninstall":
-            print(f"AgentDefense removed from {uninstall(args.agent, project=project)}")
+            print(f"JevDefense removed from {uninstall(args.agent, project=project)}")
             return 0
         path, note = install(args.agent, project=project)
-        print(f"AgentDefense installed for {args.agent}: {path}")
+        print(f"JevDefense installed for {args.agent}: {path}")
         if note:
             print(note)
         from .config import resolve_api_key
 
         if not resolve_api_key():
-            print("No API key found yet: run `agentdefense key <key>`. Until then every checked call asks for confirmation.")
+            print("No API key found yet: run `jevdefense key <key>`. Until then every checked call asks for confirmation.")
         return 0
     if args.cmd == "key":
         from .config import save_api_key
@@ -215,7 +215,7 @@ async def _run(args, jev) -> int:
 
 
 def cli() -> None:
-    """Console-script entry point (`agentdefense …`), installed by pyproject.toml."""
+    """Console-script entry point (`jevdefense …`), installed by pyproject.toml."""
     argv = sys.argv[1:]
     if argv[:1] == ["hook"]:
         # The hook runs its own event loop, so it must start outside ours. It's also the hot

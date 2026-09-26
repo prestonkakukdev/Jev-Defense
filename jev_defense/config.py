@@ -5,7 +5,7 @@ The API key can live in four places, checked in this order (first hit wins):
 
   1. TYPESAFE_API_KEY or JEV_API_KEY in the environment   (CLIs inherit your shell)
   2. a .env file in the current folder or next to this package
-  3. ~/.agent_defense/config.json, written by `agentdefense key <key>`
+  3. ~/.jev_defense/config.json, written by `jevdefense key <key>`
 
 Why the file: editors launched from the Dock (Cursor, Zed, VS Code) never read your shell
 profile, so an exported variable is invisible to them. A 0600 file in your home folder is
@@ -18,14 +18,14 @@ import json
 import os
 from pathlib import Path
 
-HOME_DIR = Path(os.environ.get("AGENT_DEFENSE_HOME", Path.home() / ".agent_defense"))
+HOME_DIR = Path(os.environ.get("JEV_DEFENSE_HOME", Path.home() / ".jev_defense"))
 CONFIG_FILE = HOME_DIR / "config.json"
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 
 # Total time one gate decision may take, retries included. Hosts kill a hook at ~30 s, and a
 # killed hook is NOT a denial: in Claude Code a timed-out hook is a non-blocking error and the
 # tool call goes ahead. So the guard must give up on its own, early enough to answer "ask".
-TIMEOUT_S = float(os.environ.get("AGENT_DEFENSE_TIMEOUT", "20"))
+TIMEOUT_S = float(os.environ.get("JEV_DEFENSE_TIMEOUT", "20"))
 
 
 def _read_env_file(path: Path) -> dict[str, str]:
@@ -76,4 +76,4 @@ def save_api_key(key: str) -> Path:
 
 def fail_open() -> bool:
     """Default is fail CLOSED: an unreachable model means 'ask a human'. Opt out explicitly."""
-    return os.environ.get("AGENT_DEFENSE_FAIL_OPEN") == "1"
+    return os.environ.get("JEV_DEFENSE_FAIL_OPEN") == "1"

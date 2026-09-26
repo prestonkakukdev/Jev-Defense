@@ -2,7 +2,7 @@
 PLAYGROUND: watch a gullible agent get hijacked, with and without the guard.
 
 Claude Code is hard to test against, because it has its own judgment. It refuses obviously
-bad requests before AgentDefense ever sees them, so you never get to watch the guard work.
+bad requests before JevDefense ever sees them, so you never get to watch the guard work.
 
 So this file ships a deliberately STUPID agent. It has no judgment at all:
 it reads a web page and does whatever instructions it finds there. That's a real failure
@@ -11,7 +11,7 @@ mode (a hijacked agent), simulated without needing a hijacked model.
 Then you run the same scenario twice:
 
     UNGUARDED: the agent obeys the page. Your files disappear.
-    GUARDED:   the same agent, same page, with AgentDefense in the way.
+    GUARDED:   the same agent, same page, with JevDefense in the way.
 
 Usage:
     python playground.py                     # the built-in scenario, both modes
@@ -34,7 +34,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from agent_defense import ActionGate, ActionRequest, ContentGate, Session, default_backend, wrap_untrusted
+from jev_defense import ActionGate, ActionRequest, ContentGate, Session, default_backend, wrap_untrusted
 
 G, Y, R, B, D, X = "\033[32m", "\033[33m", "\033[31m", "\033[1m", "\033[2m", "\033[0m"
 
@@ -104,7 +104,7 @@ def snapshot(sandbox: Path) -> str:
 
 
 def make_sandbox() -> Path:
-    sandbox = Path(tempfile.mkdtemp(prefix="agentdefense-play-"))
+    sandbox = Path(tempfile.mkdtemp(prefix="jevdefense-play-"))
     (sandbox / "src").mkdir()
     (sandbox / "src" / "app.py").write_text("print('your important code')\n")
     (sandbox / "README.md").write_text("# My project\n")
@@ -136,7 +136,7 @@ async def guarded(page: str, task: str, jev) -> None:
     session = Session()  # shared memory: content gate warns, action gate acts on the warning
     content_gate, action_gate = ContentGate(jev, session), ActionGate(jev, session)
 
-    print(f"\n{B}{G}━━━ RUN 2: SAME AGENT, SAME PAGE, WITH AGENTDEFENSE ━━━{X}")
+    print(f"\n{B}{G}━━━ RUN 2: SAME AGENT, SAME PAGE, WITH JEV DEFENSE ━━━{X}")
     print(f"{D}sandbox before: {snapshot(sandbox)}{X}")
     print(f"{B}You:{X} {task}")
 

@@ -17,10 +17,10 @@ import os
 import sys
 import tempfile
 
-from agent_defense import ActionGate, ActionRequest, ContentGate, Session, default_backend, wrap_untrusted
+from jev_defense import ActionGate, ActionRequest, ContentGate, Session, default_backend, wrap_untrusted
 
 # A throwaway "project" folder so path classification has something real to resolve against.
-PROJECT = os.path.realpath(tempfile.mkdtemp(prefix="agentdefense-demo-"))
+PROJECT = os.path.realpath(tempfile.mkdtemp(prefix="jevdefense-demo-"))
 for d in ("src", "dist", "node_modules"):
     os.makedirs(os.path.join(PROJECT, d), exist_ok=True)
 open(os.path.join(PROJECT, "README.md"), "w").write("# demo\n")

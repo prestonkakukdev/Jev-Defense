@@ -3,5 +3,5 @@
 __pycache__/
 .pytest_cache/
 *.egg-info/
-*.agentdefense.bak
+*.jevdefense.bak
 .DS_Store

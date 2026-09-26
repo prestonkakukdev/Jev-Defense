@@ -362,7 +362,7 @@ class ContentGate:
             # Fail closed: unscanned content is delivered only as a warning, never as plain text.
             verdict.status = "injection"
             verdict.error = f"{type(exc).__name__}: {exc}"
-            verdict.safe_text = f"[AgentDefense could not scan this content ({verdict.error}). It was withheld.]"
+            verdict.safe_text = f"[JevDefense could not scan this content ({verdict.error}). It was withheld.]"
             self.session.record_content(source, verdict.status, [])
             return verdict
 
@@ -387,11 +387,11 @@ class ContentGate:
             if seg.hidden and not self.include_hidden_text:
                 continue  # the agent sees what a human would see
             if finding.status == "injection":
-                parts.append(f"[AgentDefense removed a passage here: suspected prompt injection ({'; '.join(finding.triggers)})]")
+                parts.append(f"[JevDefense removed a passage here: suspected prompt injection ({'; '.join(finding.triggers)})]")
             else:
                 parts.append(seg.text)
         if verdict.chunks_skipped:
-            parts.append(f"[AgentDefense: {verdict.chunks_skipped} more passages were not scanned and were withheld.]")
+            parts.append(f"[JevDefense: {verdict.chunks_skipped} more passages were not scanned and were withheld.]")
         return "\n\n".join(parts)
 
 

@@ -43,7 +43,7 @@ def session_path(session_id: str) -> Path:
     fixed-length filename.
     """
     digest = hashlib.sha1(str(session_id).encode()).hexdigest()[:16]
-    return Path(os.environ.get("AGENT_DEFENSE_STATE_DIR", config.HOME_DIR / "sessions")) / f"{digest}.json"
+    return Path(os.environ.get("JEV_DEFENSE_STATE_DIR", config.HOME_DIR / "sessions")) / f"{digest}.json"
 
 
 @dataclass

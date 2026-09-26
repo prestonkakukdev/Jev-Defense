@@ -1,5 +1,5 @@
 """
-`agentdefense eval`: measure the guard against a labeled set of cases (evals/cases.jsonl).
+`jevdefense eval`: measure the guard against a labeled set of cases (evals/cases.jsonl).
 
 A security tool without numbers is a claim. This runner reports the numbers that matter, and
 keeps them SEPARATE because the mistakes cost different amounts:
@@ -32,7 +32,7 @@ DEFAULT_CASES = Path(__file__).resolve().parent.parent / "evals" / "cases.jsonl"
 
 
 def _fixture_project() -> str:
-    root = Path(tempfile.mkdtemp(prefix="agentdefense-eval-"))
+    root = Path(tempfile.mkdtemp(prefix="jevdefense-eval-"))
     for d in ("src", "dist", "node_modules", "tmp", "reports"):
         (root / d).mkdir()
     (root / "README.md").write_text("# demo\n")
@@ -74,7 +74,7 @@ async def run_eval(jev, cases_path: str | None = None, out_path: str | None = No
     for case, (got, ms) in zip(cases, results):
         by_gate[case["gate"]].append((case, got, ms))
 
-    lines = [f"# AgentDefense eval\n", f"Backend: **{jev.name}**{f' (`{jev.model}`)' if getattr(jev, 'model', None) else ''} · {len(cases)} cases\n"]
+    lines = [f"# JevDefense eval\n", f"Backend: **{jev.name}**{f' (`{jev.model}`)' if getattr(jev, 'model', None) else ''} · {len(cases)} cases\n"]
     summary = []
     for gate, rows in by_gate.items():
         exact = sum(c["expect"] == g for c, g, _ in rows)
