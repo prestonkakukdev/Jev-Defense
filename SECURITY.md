@@ -1,6 +1,6 @@
 # Security
 
-AgentDefense is a guardrail, not a sandbox. Please report bypasses: they are the most useful contribution this project can get.
+Jev Defense is a guardrail, not a sandbox. Please report bypasses: they are the most useful contribution this project can get.
 
 **Found a bypass?** Open a private security advisory on GitHub (Security → Report a vulnerability) with:
 - the host (Claude Code, Codex, …) and version,
