@@ -18,7 +18,9 @@ from pathlib import Path
 
 # Every command we write contains one of these, which is how we recognise (and replace) our own
 # entries, including ones from the older hooks/claude_code_guard.py setup.
-MARKS = ("jev_defense", "claude_code_guard")
+# Includes the pre-rename names ("agent_defense", "agentdefense") so `uninstall` still cleans
+# up hooks written by older versions.
+MARKS = ("jev_defense", "jevdefense", "agent_defense", "agentdefense", "claude_code_guard")
 AGENTS = ("claude", "codex", "copilot", "gemini", "cursor", "opencode")
 
 # Tool matchers for Claude-shaped hosts. PreToolUse covers everything that changes the world;
@@ -73,6 +75,7 @@ def install(agent: str, home: Path | None = None, project: Path | None = None) -
             note = "Run /hooks inside Codex to trust the new hooks. Codex can't show approval prompts, so ASK verdicts are refused (JEV_DEFENSE_ASK_FALLBACK=warn to change)."
 
     elif agent == "copilot":
+        (home / ".copilot" / "hooks" / "agentdefense.json").unlink(missing_ok=True)  # pre-rename
         path = home / ".copilot" / "hooks" / "jevdefense.json"
         cmd = hook_command("copilot")
         cfg = {"version": 1, "hooks": {ev: [{"type": "command", "bash": cmd, "timeoutSec": 30}] for ev in ("PreToolUse", "PostToolUse", "UserPromptSubmit", "SessionStart")}}
@@ -127,6 +130,7 @@ def uninstall(agent: str, home: Path | None = None, project: Path | None = None)
     if agent == "opencode":
         path = home / ".config" / "opencode" / "plugins" / "jevdefense.js"
         path.unlink(missing_ok=True)
+        (home / ".config" / "opencode" / "plugins" / "agentdefense.js").unlink(missing_ok=True)  # pre-rename
         return path
     if agent == "copilot":
         path = home / ".copilot" / "hooks" / "jevdefense.json"
